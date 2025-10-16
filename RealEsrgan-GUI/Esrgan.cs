@@ -160,7 +160,6 @@ namespace RealEsrgan_GUI
                 try
                 {
                     process.Kill();
-                    process.WaitForExit();
                     return true;
                 }
                 catch

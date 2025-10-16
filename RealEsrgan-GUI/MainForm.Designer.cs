@@ -31,19 +31,15 @@
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.BrowseInputButton = new System.Windows.Forms.Button();
-            this.BrowseOutputButton = new System.Windows.Forms.Button();
             this.ScaleComboBox = new System.Windows.Forms.ComboBox();
             this.ModelComboBox = new System.Windows.Forms.ComboBox();
             this.TTAModeCheckBox = new System.Windows.Forms.CheckBox();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.OutputGroupBox = new System.Windows.Forms.GroupBox();
             this.ConsoleOutputRichTextBox = new System.Windows.Forms.RichTextBox();
             this.RunButton = new System.Windows.Forms.Button();
             this.ScaleLabel = new System.Windows.Forms.Label();
             this.ModelLabel = new System.Windows.Forms.Label();
-            this.InputPathLabel = new System.Windows.Forms.Label();
-            this.OutputPathLabel = new System.Windows.Forms.Label();
-            this.OutputTextBox = new System.Windows.Forms.TextBox();
-            this.InputTextBox = new System.Windows.Forms.TextBox();
+            this.InputPathCaptionLabel = new System.Windows.Forms.Label();
             this.TitleSizeUpDown = new System.Windows.Forms.NumericUpDown();
             this.TitleSizeLabel = new System.Windows.Forms.Label();
             this.FileRadioButton = new System.Windows.Forms.RadioButton();
@@ -56,17 +52,24 @@
             this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.outputFolderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
             this.StopButton = new System.Windows.Forms.Button();
-            this.AddRegButton = new System.Windows.Forms.Button();
-            this.RemoveRegButton = new System.Windows.Forms.Button();
-            this.groupBox1.SuspendLayout();
+            this.InputLabel = new System.Windows.Forms.Label();
+            this.InOutPanel = new System.Windows.Forms.Panel();
+            this.menuStrip = new System.Windows.Forms.MenuStrip();
+            this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.contextMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addToContextMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.removeFromContextMenuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.OutputGroupBox.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.TitleSizeUpDown)).BeginInit();
             this.SelectModeGroupBox.SuspendLayout();
+            this.InOutPanel.SuspendLayout();
+            this.menuStrip.SuspendLayout();
             this.SuspendLayout();
             // 
             // BrowseInputButton
             // 
             this.BrowseInputButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.BrowseInputButton.Location = new System.Drawing.Point(451, 5);
+            this.BrowseInputButton.Location = new System.Drawing.Point(256, 33);
             this.BrowseInputButton.Margin = new System.Windows.Forms.Padding(2);
             this.BrowseInputButton.Name = "BrowseInputButton";
             this.BrowseInputButton.Size = new System.Drawing.Size(61, 20);
@@ -74,18 +77,6 @@
             this.BrowseInputButton.Text = "Browse";
             this.BrowseInputButton.UseVisualStyleBackColor = true;
             this.BrowseInputButton.Click += new System.EventHandler(this.BrowseInputButton_Click);
-            // 
-            // BrowseOutputButton
-            // 
-            this.BrowseOutputButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.BrowseOutputButton.Location = new System.Drawing.Point(451, 29);
-            this.BrowseOutputButton.Margin = new System.Windows.Forms.Padding(2);
-            this.BrowseOutputButton.Name = "BrowseOutputButton";
-            this.BrowseOutputButton.Size = new System.Drawing.Size(61, 20);
-            this.BrowseOutputButton.TabIndex = 1;
-            this.BrowseOutputButton.Text = "Browse";
-            this.BrowseOutputButton.UseVisualStyleBackColor = true;
-            this.BrowseOutputButton.Click += new System.EventHandler(this.BrowseOutputButton_Click);
             // 
             // ScaleComboBox
             // 
@@ -95,7 +86,7 @@
             "x2",
             "x3",
             "x4"});
-            this.ScaleComboBox.Location = new System.Drawing.Point(61, 53);
+            this.ScaleComboBox.Location = new System.Drawing.Point(61, 58);
             this.ScaleComboBox.Margin = new System.Windows.Forms.Padding(2);
             this.ScaleComboBox.Name = "ScaleComboBox";
             this.ScaleComboBox.Size = new System.Drawing.Size(62, 21);
@@ -105,7 +96,7 @@
             // 
             this.ModelComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.ModelComboBox.FormattingEnabled = true;
-            this.ModelComboBox.Location = new System.Drawing.Point(61, 79);
+            this.ModelComboBox.Location = new System.Drawing.Point(61, 84);
             this.ModelComboBox.Margin = new System.Windows.Forms.Padding(2);
             this.ModelComboBox.Name = "ModelComboBox";
             this.ModelComboBox.Size = new System.Drawing.Size(125, 21);
@@ -114,7 +105,7 @@
             // TTAModeCheckBox
             // 
             this.TTAModeCheckBox.AutoSize = true;
-            this.TTAModeCheckBox.Location = new System.Drawing.Point(10, 130);
+            this.TTAModeCheckBox.Location = new System.Drawing.Point(10, 135);
             this.TTAModeCheckBox.Margin = new System.Windows.Forms.Padding(2);
             this.TTAModeCheckBox.Name = "TTAModeCheckBox";
             this.TTAModeCheckBox.Size = new System.Drawing.Size(76, 17);
@@ -122,20 +113,20 @@
             this.TTAModeCheckBox.Text = "TTA mode";
             this.TTAModeCheckBox.UseVisualStyleBackColor = true;
             // 
-            // groupBox1
+            // OutputGroupBox
             // 
-            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            this.OutputGroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox1.Controls.Add(this.ConsoleOutputRichTextBox);
-            this.groupBox1.Location = new System.Drawing.Point(6, 151);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(2);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(2);
-            this.groupBox1.Size = new System.Drawing.Size(624, 205);
-            this.groupBox1.TabIndex = 7;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Output";
+            this.OutputGroupBox.Controls.Add(this.ConsoleOutputRichTextBox);
+            this.OutputGroupBox.Location = new System.Drawing.Point(6, 161);
+            this.OutputGroupBox.Margin = new System.Windows.Forms.Padding(2);
+            this.OutputGroupBox.Name = "OutputGroupBox";
+            this.OutputGroupBox.Padding = new System.Windows.Forms.Padding(2);
+            this.OutputGroupBox.Size = new System.Drawing.Size(429, 195);
+            this.OutputGroupBox.TabIndex = 7;
+            this.OutputGroupBox.TabStop = false;
+            this.OutputGroupBox.Text = "Output";
             // 
             // ConsoleOutputRichTextBox
             // 
@@ -144,14 +135,14 @@
             this.ConsoleOutputRichTextBox.Margin = new System.Windows.Forms.Padding(2);
             this.ConsoleOutputRichTextBox.Name = "ConsoleOutputRichTextBox";
             this.ConsoleOutputRichTextBox.ReadOnly = true;
-            this.ConsoleOutputRichTextBox.Size = new System.Drawing.Size(620, 188);
+            this.ConsoleOutputRichTextBox.Size = new System.Drawing.Size(425, 178);
             this.ConsoleOutputRichTextBox.TabIndex = 0;
             this.ConsoleOutputRichTextBox.Text = "";
             // 
             // RunButton
             // 
             this.RunButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.RunButton.Location = new System.Drawing.Point(559, 127);
+            this.RunButton.Location = new System.Drawing.Point(364, 132);
             this.RunButton.Margin = new System.Windows.Forms.Padding(2);
             this.RunButton.Name = "RunButton";
             this.RunButton.Size = new System.Drawing.Size(71, 25);
@@ -163,7 +154,7 @@
             // ScaleLabel
             // 
             this.ScaleLabel.AutoSize = true;
-            this.ScaleLabel.Location = new System.Drawing.Point(7, 56);
+            this.ScaleLabel.Location = new System.Drawing.Point(7, 61);
             this.ScaleLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.ScaleLabel.Name = "ScaleLabel";
             this.ScaleLabel.Size = new System.Drawing.Size(34, 13);
@@ -173,56 +164,26 @@
             // ModelLabel
             // 
             this.ModelLabel.AutoSize = true;
-            this.ModelLabel.Location = new System.Drawing.Point(7, 82);
+            this.ModelLabel.Location = new System.Drawing.Point(7, 87);
             this.ModelLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.ModelLabel.Name = "ModelLabel";
             this.ModelLabel.Size = new System.Drawing.Size(36, 13);
             this.ModelLabel.TabIndex = 10;
             this.ModelLabel.Text = "Model";
             // 
-            // InputPathLabel
+            // InputPathCaptionLabel
             // 
-            this.InputPathLabel.AutoSize = true;
-            this.InputPathLabel.Location = new System.Drawing.Point(7, 8);
-            this.InputPathLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-            this.InputPathLabel.Name = "InputPathLabel";
-            this.InputPathLabel.Size = new System.Drawing.Size(31, 13);
-            this.InputPathLabel.TabIndex = 12;
-            this.InputPathLabel.Text = "Input";
-            // 
-            // OutputPathLabel
-            // 
-            this.OutputPathLabel.AutoSize = true;
-            this.OutputPathLabel.Location = new System.Drawing.Point(7, 32);
-            this.OutputPathLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
-            this.OutputPathLabel.Name = "OutputPathLabel";
-            this.OutputPathLabel.Size = new System.Drawing.Size(39, 13);
-            this.OutputPathLabel.TabIndex = 13;
-            this.OutputPathLabel.Text = "Output";
-            // 
-            // OutputTextBox
-            // 
-            this.OutputTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.OutputTextBox.Location = new System.Drawing.Point(61, 29);
-            this.OutputTextBox.Margin = new System.Windows.Forms.Padding(2);
-            this.OutputTextBox.Name = "OutputTextBox";
-            this.OutputTextBox.Size = new System.Drawing.Size(386, 20);
-            this.OutputTextBox.TabIndex = 14;
-            // 
-            // InputTextBox
-            // 
-            this.InputTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.InputTextBox.Location = new System.Drawing.Point(61, 5);
-            this.InputTextBox.Margin = new System.Windows.Forms.Padding(2);
-            this.InputTextBox.Name = "InputTextBox";
-            this.InputTextBox.Size = new System.Drawing.Size(386, 20);
-            this.InputTextBox.TabIndex = 15;
+            this.InputPathCaptionLabel.AutoSize = true;
+            this.InputPathCaptionLabel.Location = new System.Drawing.Point(7, 36);
+            this.InputPathCaptionLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.InputPathCaptionLabel.Name = "InputPathCaptionLabel";
+            this.InputPathCaptionLabel.Size = new System.Drawing.Size(34, 13);
+            this.InputPathCaptionLabel.TabIndex = 12;
+            this.InputPathCaptionLabel.Text = "Input:";
             // 
             // TitleSizeUpDown
             // 
-            this.TitleSizeUpDown.Location = new System.Drawing.Point(61, 105);
+            this.TitleSizeUpDown.Location = new System.Drawing.Point(61, 110);
             this.TitleSizeUpDown.Maximum = new decimal(new int[] {
             512,
             0,
@@ -245,7 +206,7 @@
             // TitleSizeLabel
             // 
             this.TitleSizeLabel.AutoSize = true;
-            this.TitleSizeLabel.Location = new System.Drawing.Point(7, 107);
+            this.TitleSizeLabel.Location = new System.Drawing.Point(7, 112);
             this.TitleSizeLabel.Name = "TitleSizeLabel";
             this.TitleSizeLabel.Size = new System.Drawing.Size(48, 13);
             this.TitleSizeLabel.TabIndex = 17;
@@ -268,7 +229,7 @@
             this.SelectModeGroupBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.SelectModeGroupBox.Controls.Add(this.FolderRadioButton);
             this.SelectModeGroupBox.Controls.Add(this.FileRadioButton);
-            this.SelectModeGroupBox.Location = new System.Drawing.Point(517, 5);
+            this.SelectModeGroupBox.Location = new System.Drawing.Point(322, 29);
             this.SelectModeGroupBox.Name = "SelectModeGroupBox";
             this.SelectModeGroupBox.Size = new System.Drawing.Size(113, 39);
             this.SelectModeGroupBox.TabIndex = 19;
@@ -289,6 +250,7 @@
             // 
             this.openFileDialog.Filter = "Изображения (*.png;*.jpg;*.jpeg;*.bmp;*.tga;*.ppm)|*.png;*.jpg;*.jpeg;*.bmp;*.tga" +
     ";*.ppm|Все файлы (*.*)|*.*";
+            this.openFileDialog.Multiselect = true;
             // 
             // saveFileDialog
             // 
@@ -300,7 +262,7 @@
             this.AutoTitleSizeCheckBox.AutoSize = true;
             this.AutoTitleSizeCheckBox.Checked = true;
             this.AutoTitleSizeCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.AutoTitleSizeCheckBox.Location = new System.Drawing.Point(129, 107);
+            this.AutoTitleSizeCheckBox.Location = new System.Drawing.Point(129, 112);
             this.AutoTitleSizeCheckBox.Name = "AutoTitleSizeCheckBox";
             this.AutoTitleSizeCheckBox.Size = new System.Drawing.Size(47, 17);
             this.AutoTitleSizeCheckBox.TabIndex = 20;
@@ -317,7 +279,7 @@
             // StopButton
             // 
             this.StopButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.StopButton.Location = new System.Drawing.Point(484, 127);
+            this.StopButton.Location = new System.Drawing.Point(289, 132);
             this.StopButton.Margin = new System.Windows.Forms.Padding(2);
             this.StopButton.Name = "StopButton";
             this.StopButton.Size = new System.Drawing.Size(71, 25);
@@ -326,66 +288,109 @@
             this.StopButton.UseVisualStyleBackColor = true;
             this.StopButton.Click += new System.EventHandler(this.StopButton_Click);
             // 
-            // AddRegButton
+            // InputLabel
             // 
-            this.AddRegButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.AddRegButton.Location = new System.Drawing.Point(476, 64);
-            this.AddRegButton.Margin = new System.Windows.Forms.Padding(2);
-            this.AddRegButton.Name = "AddRegButton";
-            this.AddRegButton.Size = new System.Drawing.Size(154, 22);
-            this.AddRegButton.TabIndex = 22;
-            this.AddRegButton.Text = "Add to context menu";
-            this.AddRegButton.UseVisualStyleBackColor = true;
-            this.AddRegButton.Click += new System.EventHandler(this.AddRegButton_Click);
+            this.InputLabel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.InputLabel.AutoSize = true;
+            this.InputLabel.Location = new System.Drawing.Point(2, 4);
+            this.InputLabel.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.InputLabel.Name = "InputLabel";
+            this.InputLabel.Size = new System.Drawing.Size(10, 13);
+            this.InputLabel.TabIndex = 24;
+            this.InputLabel.Text = "-";
             // 
-            // RemoveRegButton
+            // InOutPanel
             // 
-            this.RemoveRegButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.RemoveRegButton.Location = new System.Drawing.Point(476, 90);
-            this.RemoveRegButton.Margin = new System.Windows.Forms.Padding(2);
-            this.RemoveRegButton.Name = "RemoveRegButton";
-            this.RemoveRegButton.Size = new System.Drawing.Size(154, 22);
-            this.RemoveRegButton.TabIndex = 23;
-            this.RemoveRegButton.Text = "Remove from context menu";
-            this.RemoveRegButton.UseVisualStyleBackColor = true;
-            this.RemoveRegButton.Click += new System.EventHandler(this.RemoveRegButton_Click);
+            this.InOutPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.InOutPanel.Controls.Add(this.InputLabel);
+            this.InOutPanel.Location = new System.Drawing.Point(49, 32);
+            this.InOutPanel.Name = "InOutPanel";
+            this.InOutPanel.Size = new System.Drawing.Size(205, 21);
+            this.InOutPanel.TabIndex = 26;
+            // 
+            // menuStrip
+            // 
+            this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolsToolStripMenuItem});
+            this.menuStrip.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip.Name = "menuStrip";
+            this.menuStrip.Size = new System.Drawing.Size(442, 24);
+            this.menuStrip.TabIndex = 27;
+            this.menuStrip.Text = "menuStrip";
+            // 
+            // toolsToolStripMenuItem
+            // 
+            this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.contextMenuToolStripMenuItem});
+            this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
+            this.toolsToolStripMenuItem.Text = "Tools";
+            // 
+            // contextMenuToolStripMenuItem
+            // 
+            this.contextMenuToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addToContextMenuToolStripMenuItem,
+            this.removeFromContextMenuToolStripMenuItem});
+            this.contextMenuToolStripMenuItem.Name = "contextMenuToolStripMenuItem";
+            this.contextMenuToolStripMenuItem.Size = new System.Drawing.Size(149, 22);
+            this.contextMenuToolStripMenuItem.Text = "Context menu";
+            // 
+            // addToContextMenuToolStripMenuItem
+            // 
+            this.addToContextMenuToolStripMenuItem.Name = "addToContextMenuToolStripMenuItem";
+            this.addToContextMenuToolStripMenuItem.Size = new System.Drawing.Size(222, 22);
+            this.addToContextMenuToolStripMenuItem.Text = "Add to context menu";
+            this.addToContextMenuToolStripMenuItem.Click += new System.EventHandler(this.addToContextMenuToolStripMenuItem_Click);
+            // 
+            // removeFromContextMenuToolStripMenuItem
+            // 
+            this.removeFromContextMenuToolStripMenuItem.Name = "removeFromContextMenuToolStripMenuItem";
+            this.removeFromContextMenuToolStripMenuItem.Size = new System.Drawing.Size(222, 22);
+            this.removeFromContextMenuToolStripMenuItem.Text = "Remove from context menu";
+            this.removeFromContextMenuToolStripMenuItem.Click += new System.EventHandler(this.removeFromContextMenuToolStripMenuItem_Click);
             // 
             // MainForm
             // 
+            this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(637, 367);
-            this.Controls.Add(this.RemoveRegButton);
-            this.Controls.Add(this.AddRegButton);
+            this.ClientSize = new System.Drawing.Size(442, 367);
+            this.Controls.Add(this.InOutPanel);
             this.Controls.Add(this.StopButton);
             this.Controls.Add(this.AutoTitleSizeCheckBox);
             this.Controls.Add(this.SelectModeGroupBox);
             this.Controls.Add(this.TitleSizeLabel);
             this.Controls.Add(this.TitleSizeUpDown);
-            this.Controls.Add(this.InputTextBox);
-            this.Controls.Add(this.OutputTextBox);
-            this.Controls.Add(this.OutputPathLabel);
-            this.Controls.Add(this.InputPathLabel);
+            this.Controls.Add(this.InputPathCaptionLabel);
             this.Controls.Add(this.ModelLabel);
             this.Controls.Add(this.ScaleLabel);
             this.Controls.Add(this.RunButton);
-            this.Controls.Add(this.groupBox1);
+            this.Controls.Add(this.OutputGroupBox);
             this.Controls.Add(this.TTAModeCheckBox);
             this.Controls.Add(this.ModelComboBox);
             this.Controls.Add(this.ScaleComboBox);
-            this.Controls.Add(this.BrowseOutputButton);
             this.Controls.Add(this.BrowseInputButton);
+            this.Controls.Add(this.menuStrip);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MainMenuStrip = this.menuStrip;
             this.Margin = new System.Windows.Forms.Padding(2);
-            this.MinimumSize = new System.Drawing.Size(395, 385);
+            this.MinimumSize = new System.Drawing.Size(390, 370);
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "RealEsrgan GUI";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
-            this.groupBox1.ResumeLayout(false);
+            this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainForm_DragDrop);
+            this.DragEnter += new System.Windows.Forms.DragEventHandler(this.MainForm_DragEnter);
+            this.OutputGroupBox.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.TitleSizeUpDown)).EndInit();
             this.SelectModeGroupBox.ResumeLayout(false);
             this.SelectModeGroupBox.PerformLayout();
+            this.InOutPanel.ResumeLayout(false);
+            this.InOutPanel.PerformLayout();
+            this.menuStrip.ResumeLayout(false);
+            this.menuStrip.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -394,19 +399,15 @@
         #endregion
 
         private System.Windows.Forms.Button BrowseInputButton;
-        private System.Windows.Forms.Button BrowseOutputButton;
         private System.Windows.Forms.ComboBox ScaleComboBox;
         private System.Windows.Forms.ComboBox ModelComboBox;
         private System.Windows.Forms.CheckBox TTAModeCheckBox;
-        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox OutputGroupBox;
         private System.Windows.Forms.RichTextBox ConsoleOutputRichTextBox;
         private System.Windows.Forms.Button RunButton;
         private System.Windows.Forms.Label ScaleLabel;
         private System.Windows.Forms.Label ModelLabel;
-        private System.Windows.Forms.Label InputPathLabel;
-        private System.Windows.Forms.Label OutputPathLabel;
-        private System.Windows.Forms.TextBox OutputTextBox;
-        private System.Windows.Forms.TextBox InputTextBox;
+        private System.Windows.Forms.Label InputPathCaptionLabel;
         private System.Windows.Forms.NumericUpDown TitleSizeUpDown;
         private System.Windows.Forms.Label TitleSizeLabel;
         private System.Windows.Forms.RadioButton FileRadioButton;
@@ -419,8 +420,13 @@
         private System.Windows.Forms.ToolTip toolTip;
         private System.Windows.Forms.FolderBrowserDialog outputFolderBrowserDialog;
         private System.Windows.Forms.Button StopButton;
-        private System.Windows.Forms.Button AddRegButton;
-        private System.Windows.Forms.Button RemoveRegButton;
+        private System.Windows.Forms.Label InputLabel;
+        private System.Windows.Forms.Panel InOutPanel;
+        private System.Windows.Forms.MenuStrip menuStrip;
+        private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem contextMenuToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addToContextMenuToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem removeFromContextMenuToolStripMenuItem;
     }
 }
 
