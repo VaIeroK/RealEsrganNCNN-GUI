@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO.Pipes;
 
 namespace RealEsrgan_GUI
 {
@@ -32,7 +33,8 @@ namespace RealEsrgan_GUI
         {
             InitializeComponent();
 
-            var unused = this.Handle;
+            inputPaths = new List<string>();
+            StartPipeServer();
 
             var fileMap = new ExeConfigurationFileMap { ExeConfigFilename = configPath };
             config = ConfigurationManager.OpenMappedExeConfiguration(fileMap, ConfigurationUserLevel.None);
@@ -51,7 +53,6 @@ namespace RealEsrgan_GUI
 
             ScaleComboBox.SelectedIndex = 0;
 
-            inputPaths = new List<string>();
             esrgan = new Esrgan("realesrgan-ncnn-vulkan.exe", "models");
             var models = esrgan.GetModelNames();
             foreach (var name in models)
@@ -339,17 +340,28 @@ namespace RealEsrgan_GUI
                 e.Effect = DragDropEffects.None;
         }
 
-        protected override void WndProc(ref Message m)
+
+        private async void StartPipeServer()
         {
-            if (m.Msg == Program.WM_COPYDATA)
+            await Task.Run(async () =>
             {
-                Program.COPYDATASTRUCT cds = (Program.COPYDATASTRUCT)Marshal.PtrToStructure(m.LParam, typeof(Program.COPYDATASTRUCT));
-                string argString = Marshal.PtrToStringUni(cds.lpData);
-                string[] files = argString.Split('|');
-                MessageBox.Show(string.Join(", ", files), "", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                AddPaths(files, true);
-            }
-            base.WndProc(ref m);
+                while (true)
+                {
+                    using (var server = new NamedPipeServerStream("RealEsrganPipe", PipeDirection.In))
+                    {
+                        await server.WaitForConnectionAsync();
+                        using (var reader = new StreamReader(server))
+                        {
+                            string line = await reader.ReadLineAsync();
+                            string[] files = line.Split('|');
+                            this.Invoke((Action)(() =>
+                            {
+                                AddPaths(files, true);
+                            }));
+                        }
+                    }
+                }
+            });
         }
 
         #region Settings
