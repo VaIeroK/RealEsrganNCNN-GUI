@@ -8,68 +8,35 @@ namespace RealEsrgan_GUI
     {
         public static string GetDirectoryPath(string path)
         {
-            string fullPath = Path.GetFullPath(path);
-
-            if (Directory.Exists(fullPath))
-            {
-                return fullPath;
-            }
-
-            string lnkPath = fullPath + ".lnk";
-            if (System.IO.File.Exists(lnkPath))
-            {
-                try
-                {
-                    var shell = new WshShell();
-                    var shortcut = (IWshShortcut)shell.CreateShortcut(lnkPath);
-                    string resolvedPath = shortcut.TargetPath;
-
-                    if (Directory.Exists(resolvedPath))
-                    {
-                        return resolvedPath;
-                    }
-
-                    throw new DirectoryNotFoundException($"Shortcut '{lnkPath}' does not point to an existing directory.");
-                }
-                catch (Exception ex)
-                {
-                    throw new IOException($"Failed to read shortcut '{lnkPath}'.", ex);
-                }
-            }
-
-            throw new DirectoryNotFoundException($"Directory '{path}' not found and no valid shortcut '{lnkPath}' exists.");
+            var fullPath = Path.GetFullPath(path);
+            if (Directory.Exists(fullPath)) return fullPath;
+            var resolved = ResolveShortcut(fullPath + ".lnk");
+            if (!string.IsNullOrEmpty(resolved) && Directory.Exists(resolved)) return resolved;
+            throw new DirectoryNotFoundException($"Directory '{path}' not found and no valid shortcut exists.");
         }
 
         public static string GetFilePath(string path)
         {
-            string fullPath = Path.GetFullPath(path);
+            var fullPath = Path.GetFullPath(path);
+            if (System.IO.File.Exists(fullPath)) return fullPath;
+            var resolved = ResolveShortcut(fullPath + ".lnk");
+            if (!string.IsNullOrEmpty(resolved) && System.IO.File.Exists(resolved)) return resolved;
+            throw new FileNotFoundException($"File '{path}' not found and no valid shortcut exists.");
+        }
 
-            if (System.IO.File.Exists(fullPath))
+        private static string ResolveShortcut(string lnkPath)
+        {
+            if (!System.IO.File.Exists(lnkPath)) return null;
+            try
             {
-                return fullPath;
+                var shell = new WshShell();
+                var shortcut = (IWshShortcut)shell.CreateShortcut(lnkPath);
+                return shortcut.TargetPath;
             }
-
-            string lnkPath = fullPath + ".lnk";
-            if (System.IO.File.Exists(lnkPath))
+            catch (Exception ex)
             {
-                try
-                {
-                    var shell = new WshShell();
-                    var shortcut = (IWshShortcut)shell.CreateShortcut(lnkPath);
-                    string resolvedPath = shortcut.TargetPath;
-
-                    if (System.IO.File.Exists(resolvedPath))
-                    {
-                        return resolvedPath;
-                    }
-                    throw new FileNotFoundException($"Shortcut '{lnkPath}' does not point to an existing file.");
-                }
-                catch (Exception ex)
-                {
-                    throw new IOException($"Failed to read shortcut '{lnkPath}'.", ex);
-                }
+                throw new IOException($"Failed to read shortcut '{lnkPath}'.", ex);
             }
-            throw new FileNotFoundException($"File '{path}' not found and no valid shortcut '{lnkPath}' exists.");
         }
     }
 }

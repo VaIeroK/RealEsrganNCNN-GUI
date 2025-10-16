@@ -1,16 +1,12 @@
 ﻿using IWshRuntimeLibrary;
 using Microsoft.Win32;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -20,29 +16,29 @@ namespace RealEsrgan_GUI
 {
     public partial class MainForm : Form
     {
-        string[] extensions = { ".png", ".jpg", ".jpeg", ".webp" };
-        private Control[] controlsToSave = null;
+        private static readonly string[] extensions = { ".png", ".jpg", ".jpeg", ".webp" };
+        private readonly Control[] controlsToSave;
         private readonly string configPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "AppSettings.config");
-        private Configuration config;
+        private readonly Configuration config;
         private static readonly Mutex configMutex = new Mutex(false, "RealEsrganUpscale_ConfigMutex");
-        private Esrgan esrgan = null;
-        private bool esrganTerminated = false;
-        private List<string> inputPaths = null;
+        private readonly Esrgan esrgan;
+        private bool esrganTerminated;
+        private readonly List<string> inputPaths = new List<string>();
+        private CancellationTokenSource pipeCts;
 
         public MainForm(string[] args)
         {
             InitializeComponent();
 
-            inputPaths = new List<string>();
             StartPipeServer();
 
             var fileMap = new ExeConfigurationFileMap { ExeConfigFilename = configPath };
             config = ConfigurationManager.OpenMappedExeConfiguration(fileMap, ConfigurationUserLevel.None);
 
-            controlsToSave = new Control[] 
-            { 
+            controlsToSave = new Control[]
+            {
                 this,
-                FileRadioButton, 
+                FileRadioButton,
                 FolderRadioButton,
                 ScaleComboBox,
                 ModelComboBox,
@@ -54,8 +50,7 @@ namespace RealEsrgan_GUI
             ScaleComboBox.SelectedIndex = 0;
 
             esrgan = new Esrgan("realesrgan-ncnn-vulkan.exe", "models");
-            var models = esrgan.GetModelNames();
-            foreach (var name in models)
+            foreach (var name in esrgan.GetModelNames())
                 ModelComboBox.Items.Add(name);
 
             if (ModelComboBox.Items.Count > 0)
@@ -81,16 +76,12 @@ namespace RealEsrgan_GUI
             if (FileRadioButton.Checked)
             {
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
                     AddPaths(openFileDialog.FileNames);
-                }
             }
             else if (FolderRadioButton.Checked)
             {
                 if (inputFolderBrowserDialog.ShowDialog() == DialogResult.OK)
-                {
-                    AddPaths(new string[] { inputFolderBrowserDialog.SelectedPath  });
-                }
+                    AddPaths(new[] { inputFolderBrowserDialog.SelectedPath });
             }
         }
 
@@ -98,12 +89,7 @@ namespace RealEsrgan_GUI
         {
             if (esrgan.IsRunning())
             {
-                MessageBox.Show(
-                    "Upscaling is already in progress",
-                    "Warning",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning
-                );
+                MessageBox.Show("Upscaling is already in progress", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -111,13 +97,11 @@ namespace RealEsrgan_GUI
             int current = 0;
 
             esrganTerminated = false;
-            foreach (string input in inputPaths)
+            foreach (var input in inputPaths.ToArray())
             {
-                if (esrganTerminated)
-                    break;
+                if (esrganTerminated) break;
 
-                OutputGroupBox.Text = "Output    Processing: (" + (++current) + "/" + total + ")";
-
+                OutputGroupBox.Text = $"Output    Processing: ({++current}/{total})";
                 await Upscale(input);
             }
             OutputGroupBox.Text = "Output";
@@ -125,16 +109,15 @@ namespace RealEsrgan_GUI
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            StopPipeServer();
+
             SaveSettings();
             StopButton_Click(null, null);
         }
 
         private async Task Upscale(string inputPath)
         {
-            if (esrganTerminated)
-                return;
-
-            string outputPath = AddFilePrefix(inputPath);
+            if (esrganTerminated) return;
 
             if ((FileRadioButton.Checked && !System.IO.File.Exists(inputPath)) ||
                 (FolderRadioButton.Checked && !Directory.Exists(inputPath)))
@@ -144,10 +127,9 @@ namespace RealEsrgan_GUI
                 return;
             }
 
+            string outputPath = AddFilePrefix(inputPath);
             if (FolderRadioButton.Checked && !Directory.Exists(outputPath))
-            {
                 Directory.CreateDirectory(outputPath);
-            }
 
             if (ModelComboBox.SelectedIndex < 0)
             {
@@ -157,34 +139,30 @@ namespace RealEsrgan_GUI
 
             esrgan.OnOutput(data =>
             {
-                if (data != null)
-                {
-                    ConsoleOutputRichTextBox.Invoke((Action)(() =>
-                    {
-                        ConsoleOutputRichTextBox.AppendText(data + Environment.NewLine);
-                    }));
-                }
+                if (!string.IsNullOrEmpty(data))
+                    ConsoleOutputRichTextBox.Invoke((Action)(() => ConsoleOutputRichTextBox.AppendText(data + Environment.NewLine)));
             });
 
             esrgan.OnExit(code =>
             {
                 ConsoleOutputRichTextBox.Invoke((Action)(() =>
                 {
-                    if (code == 0)
-                        ConsoleOutputRichTextBox.AppendText("Upscale Finished!" + Environment.NewLine);
+                    if (code == 0) ConsoleOutputRichTextBox.AppendText("Upscale Finished!" + Environment.NewLine);
                 }));
             });
 
             ConsoleOutputRichTextBox.Clear();
+
             int scale = int.Parse(ScaleComboBox.SelectedItem.ToString().Replace("x", ""));
             int titleSize = AutoTitleSizeCheckBox.Checked ? 0 : (int)TitleSizeUpDown.Value;
-            Esrgan.EsrganModel model = esrgan.GetModel(ModelComboBox.SelectedItem.ToString(), scale);
+            var model = esrgan.GetModel(ModelComboBox.SelectedItem.ToString(), scale);
+
             if (FileRadioButton.Checked)
                 esrgan.RunFile(inputPath, outputPath, model, scale, titleSize, TTAModeCheckBox.Checked);
-            else if (FolderRadioButton.Checked)
+            else
                 esrgan.RunFolder(inputPath, outputPath, model, scale, titleSize, TTAModeCheckBox.Checked);
 
-            await Task.Run(() => esrgan.WaitForExit());
+            await esrgan.WaitForExitAsync();
         }
 
         private void AutoTitleSizeCheckBox_CheckedChanged(object sender, EventArgs e)
@@ -194,98 +172,77 @@ namespace RealEsrgan_GUI
 
         private void StopButton_Click(object sender, EventArgs e)
         {
-            if (esrgan.IsRunning())
-            {
-                esrganTerminated = true;
-                if (esrgan.Terminate())
-                    ConsoleOutputRichTextBox.AppendText("ESRGAN stopped" + Environment.NewLine);
-                else
-                    ConsoleOutputRichTextBox.AppendText("Failed to stop ESRGAN" + Environment.NewLine);
-            }
+            if (!esrgan.IsRunning()) return;
+
+            esrganTerminated = true;
+            ConsoleOutputRichTextBox.AppendText(esrgan.Terminate() ? "ESRGAN stopped" + Environment.NewLine : "Failed to stop ESRGAN" + Environment.NewLine);
         }
+
         private void UpdateInputPath()
         {
-            if (inputPaths.Count == 0)
-            {
-                InputLabel.Text = "-";
-            }
-            else
-            {
-                InputLabel.Text = Path.GetFileName(inputPaths[0]);
-                if (inputPaths.Count > 1)
-                    InputLabel.Text += $"    (+{inputPaths.Count - 1} more)";
-            }
+            InputLabel.Text = inputPaths.Count == 0
+                ? "-"
+                : (Path.GetFileName(inputPaths[0]) + (inputPaths.Count > 1 ? $"    (+{inputPaths.Count - 1} more)" : ""));
         }
 
         private string AddFilePrefix(string path)
         {
+            // handles existing file, directory or arbitrary path (with or without extension)
             if (System.IO.File.Exists(path))
             {
-                string dir = Path.GetDirectoryName(path);
-                string fileNameWithoutExt = Path.GetFileNameWithoutExtension(path);
-                string ext = Path.GetExtension(path);
-                return Path.Combine(dir, $"{fileNameWithoutExt}_upscaled{ext}");
+                var dir = Path.GetDirectoryName(path);
+                var name = Path.GetFileNameWithoutExtension(path);
+                var ext = Path.GetExtension(path);
+                return Path.Combine(dir, $"{name}_upscaled{ext}");
             }
-            else if (Directory.Exists(path))
+            if (Directory.Exists(path))
             {
-                string parentDir = Path.GetDirectoryName(path);
-                string folderName = Path.GetFileName(path);
-                return Path.Combine(parentDir, $"{folderName}_upscaled");
+                var parent = Path.GetDirectoryName(path);
+                var folder = Path.GetFileName(path);
+                return Path.Combine(parent, $"{folder}_upscaled");
             }
-            else
-            {
-                string dir = Path.GetDirectoryName(path);
-                string name = Path.GetFileName(path);
-                if (!string.IsNullOrEmpty(Path.GetExtension(name)))
-                {
-                    string fileNameWithoutExt = Path.GetFileNameWithoutExtension(name);
-                    string ext = Path.GetExtension(name);
-                    return Path.Combine(dir, $"{fileNameWithoutExt}_upscaled{ext}");
-                }
-                else
-                {
-                    return Path.Combine(dir, $"{name}_upscaled");
-                }
-            }
+            // fallback: treat as path (may be relative or non-existing)
+            var dirFallback = Path.GetDirectoryName(path);
+            var nameFallback = Path.GetFileNameWithoutExtension(path);
+            var extFallback = Path.GetExtension(path);
+            return Path.Combine(dirFallback ?? "", $"{nameFallback}_upscaled{extFallback}");
         }
 
         private void AddPaths(string[] paths, bool append = false)
         {
-            if (paths.Length > 0 && System.IO.File.Exists(paths[0]))
+            if (paths == null || paths.Length == 0) return;
+
+            if (!append)
+                inputPaths.Clear();
+
+            var first = paths[0];
+            if (System.IO.File.Exists(first))
             {
-                if (!append)
-                    inputPaths.Clear();
-                foreach (string file in paths)
+                foreach (var file in paths)
                 {
-                    string ext = Path.GetExtension(file).ToLower();
+                    var ext = Path.GetExtension(file).ToLowerInvariant();
                     if (extensions.Contains(ext) && System.IO.File.Exists(file))
-                    {
                         inputPaths.Add(file);
-                    }
                 }
                 FileRadioButton.Checked = true;
-                UpdateInputPath();
             }
-            else if (paths.Length > 0 && Directory.Exists(paths[0]))
+            else if (Directory.Exists(first))
             {
-                if (!append)
-                    inputPaths.Clear();
-                foreach (string dir in paths)
+                foreach (var dir in paths)
                 {
                     if (Directory.Exists(dir))
-                    {
                         inputPaths.Add(dir);
-                    }
                 }
                 FolderRadioButton.Checked = true;
-                UpdateInputPath();
             }
+
+            UpdateInputPath();
         }
 
         private void addToContextMenuToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string appPath = Assembly.GetExecutingAssembly().Location;
-            string menuName = "RealEsrgan Upscale";
+            var appPath = Assembly.GetExecutingAssembly().Location;
+            const string menuName = "RealEsrgan Upscale";
 
             try
             {
@@ -296,7 +253,6 @@ namespace RealEsrgan_GUI
                         key.SetValue("", menuName);
                         key.SetValue("Icon", appPath);
                     }
-
                     using (var cmdKey = Registry.ClassesRoot.CreateSubKey($@"SystemFileAssociations\{ext}\shell\RealEsrgan-GUI\command"))
                     {
                         cmdKey.SetValue("", $"\"{appPath}\" \"%1\"");
@@ -328,40 +284,84 @@ namespace RealEsrgan_GUI
 
         private void MainForm_DragDrop(object sender, DragEventArgs e)
         {
-            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            var files = (string[])e.Data.GetData(DataFormats.FileDrop);
             AddPaths(files);
         }
 
         private void MainForm_DragEnter(object sender, DragEventArgs e)
         {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-                e.Effect = DragDropEffects.Copy;
-            else
-                e.Effect = DragDropEffects.None;
+            e.Effect = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.Copy : DragDropEffects.None;
         }
 
-
-        private async void StartPipeServer()
+        private void StartPipeServer()
         {
-            await Task.Run(async () =>
+            // create CTS and fire-and-forget the server loop
+            StopPipeServer(); // ensure previous stopped if called twice
+            pipeCts = new CancellationTokenSource();
+            var token = pipeCts.Token;
+            _ = RunPipeServerAsync(token);
+        }
+
+        private void StopPipeServer()
+        {
+            try
             {
-                while (true)
+                if (pipeCts != null && !pipeCts.IsCancellationRequested)
                 {
-                    using (var server = new NamedPipeServerStream("RealEsrganPipe", PipeDirection.In))
+                    pipeCts.Cancel();
+                    pipeCts.Dispose();
+                }
+            }
+            catch
+            {
+                // ignore
+            }
+            finally
+            {
+                pipeCts = null;
+            }
+        }
+
+        private async Task RunPipeServerAsync(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                using (var server = new NamedPipeServerStream("RealEsrganPipe", PipeDirection.In, 1, PipeTransmissionMode.Message, PipeOptions.Asynchronous))
+                {
+                    var connectTask = server.WaitForConnectionAsync();
+                    var tcs = new TaskCompletionSource<object>();
+                    using (token.Register(() => tcs.TrySetResult(null)))
                     {
-                        await server.WaitForConnectionAsync();
-                        using (var reader = new StreamReader(server))
+                        var finished = await Task.WhenAny(connectTask, tcs.Task);
+                        if (finished == tcs.Task)
                         {
-                            string line = await reader.ReadLineAsync();
-                            string[] files = line.Split('|');
-                            this.Invoke((Action)(() =>
+                            // cancellation requested - try to close server and exit loop
+                            try { server.Dispose(); } catch { }
+                            break;
+                        }
+                        else
+                        {
+                            // connected - read once
+                            try
                             {
-                                AddPaths(files, true);
-                            }));
+                                using (var reader = new StreamReader(server))
+                                {
+                                    var line = await reader.ReadLineAsync();
+                                    if (!string.IsNullOrEmpty(line))
+                                    {
+                                        var files = line.Split('|');
+                                        this.Invoke((Action)(() => AddPaths(files, true)));
+                                    }
+                                }
+                            }
+                            catch
+                            {
+                                // ignore transient pipe errors
+                            }
                         }
                     }
                 }
-            });
+            }
         }
 
         #region Settings
@@ -370,45 +370,36 @@ namespace RealEsrgan_GUI
             foreach (var control in controlsToSave)
             {
                 var setting = config.AppSettings.Settings[control.Name];
-                if (setting == null)
-                    continue;
+                if (setting == null) continue;
 
-                string value = config.AppSettings.Settings[control.Name]?.Value;
-                switch (control)
+                var value = setting.Value;
+                if (control is TextBox tb) tb.Text = value ?? "";
+                else if (control is ComboBox cb)
                 {
-                    case TextBox tb: tb.Text = value ?? ""; break;
-                    case ComboBox cb:
-                        if (int.TryParse(value, out int ci) && ci >= 0 && ci < cb.Items.Count)
-                            cb.SelectedIndex = ci;
-                        else
-                            cb.SelectedIndex = 0;
-                        break;
-                    case NumericUpDown nud: nud.Value = int.TryParse(value, out int nv) ? nv : 0; break;
-                    case RadioButton rb: rb.Checked = bool.TryParse(value, out bool b) ? b : false; break;
-                    case CheckBox cbx: cbx.Checked = bool.TryParse(value, out bool b2) ? b2 : false; break;
-                    case Form f:
-                        // "W,H;X,Y"
-                        var parts = value.Split(';');
-                        if (parts.Length == 2)
+                    int ci;
+                    cb.SelectedIndex = int.TryParse(value, out ci) && ci >= 0 && ci < cb.Items.Count ? ci : 0;
+                }
+                else if (control is NumericUpDown nud) nud.Value = int.TryParse(value, out int nv) ? nv : 0;
+                else if (control is RadioButton rb) rb.Checked = bool.TryParse(value, out bool rbv) ? rbv : false;
+                else if (control is CheckBox cbx) cbx.Checked = bool.TryParse(value, out bool cbv) ? cbv : false;
+                else if (control is Form f)
+                {
+                    var parts = (value ?? "").Split(';');
+                    if (parts.Length == 2)
+                    {
+                        var size = parts[0].Split(',');
+                        var pos = parts[1].Split(',');
+                        if (size.Length == 2 && int.TryParse(size[0], out int w) && int.TryParse(size[1], out int h))
+                            f.Size = new System.Drawing.Size(w, h);
+                        if (pos.Length == 2 && int.TryParse(pos[0], out int x) && int.TryParse(pos[1], out int y))
                         {
-                            var size = parts[0].Split(',');
-                            var pos = parts[1].Split(',');
-                            if (size.Length == 2 &&
-                                int.TryParse(size[0], out int w) &&
-                                int.TryParse(size[1], out int h))
-                                f.Size = new System.Drawing.Size(w, h);
-
-                            if (pos.Length == 2 &&
-                                int.TryParse(pos[0], out int x) &&
-                                int.TryParse(pos[1], out int y))
-                            {
-                                f.StartPosition = FormStartPosition.Manual;
-                                f.Location = new System.Drawing.Point(x, y);
-                            }
+                            f.StartPosition = FormStartPosition.Manual;
+                            f.Location = new System.Drawing.Point(x, y);
                         }
-                        break;
+                    }
                 }
             }
+
             openFileDialog.InitialDirectory = LoadSettings("OpenFileDialog");
             saveFileDialog.InitialDirectory = LoadSettings("SaveFileDialog");
             inputFolderBrowserDialog.SelectedPath = LoadSettings("InputFolderDialog");
@@ -423,40 +414,26 @@ namespace RealEsrgan_GUI
                 foreach (var control in controlsToSave)
                 {
                     string value = null;
+                    if (control is TextBox tb) value = tb.Text;
+                    else if (control is ComboBox cb) value = cb.SelectedIndex.ToString();
+                    else if (control is NumericUpDown nud) value = nud.Value.ToString();
+                    else if (control is RadioButton rb) value = rb.Checked.ToString();
+                    else if (control is CheckBox cbx) value = cbx.Checked.ToString();
+                    else if (control is Form f) value = $"{f.Size.Width},{f.Size.Height};{f.Location.X},{f.Location.Y}";
 
-                    if (control is TextBox tb)
-                        value = tb.Text;
-                    else if (control is ComboBox cb)
-                        value = cb.SelectedIndex.ToString();
-                    else if (control is NumericUpDown nud)
-                        value = nud.Value.ToString();
-                    else if (control is RadioButton rb)
-                        value = rb.Checked.ToString();
-                    else if (control is CheckBox cbx)
-                        value = cbx.Checked.ToString();
-                    else if (control is Form f)
-                        value = $"{f.Size.Width},{f.Size.Height};{f.Location.X},{f.Location.Y}";
-
-                    if (value == null)
-                        continue;
-
-                    AddOrSet(control.Name, value);
+                    if (value != null) AddOrSet(control.Name, value);
                 }
 
-                if (openFileDialog.FileName != "")
-                    AddOrSet("OpenFileDialog", Path.GetDirectoryName(openFileDialog.FileName));
-                if (saveFileDialog.FileName != "")
-                    AddOrSet("SaveFileDialog", Path.GetDirectoryName(saveFileDialog.FileName));
-                if (inputFolderBrowserDialog.SelectedPath != "")
-                    AddOrSet("InputFolderDialog", inputFolderBrowserDialog.SelectedPath);
-                if (outputFolderBrowserDialog.SelectedPath != "")
-                    AddOrSet("OutputFolderDialog", outputFolderBrowserDialog.SelectedPath);
+                if (!string.IsNullOrEmpty(openFileDialog.FileName)) AddOrSet("OpenFileDialog", Path.GetDirectoryName(openFileDialog.FileName));
+                if (!string.IsNullOrEmpty(saveFileDialog.FileName)) AddOrSet("SaveFileDialog", Path.GetDirectoryName(saveFileDialog.FileName));
+                if (!string.IsNullOrEmpty(inputFolderBrowserDialog.SelectedPath)) AddOrSet("InputFolderDialog", inputFolderBrowserDialog.SelectedPath);
+                if (!string.IsNullOrEmpty(outputFolderBrowserDialog.SelectedPath)) AddOrSet("OutputFolderDialog", outputFolderBrowserDialog.SelectedPath);
+
                 config.Save(ConfigurationSaveMode.Modified, false);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to save settings.\n\n" + ex.Message,
-                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Failed to save settings.\n\n" + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -464,15 +441,13 @@ namespace RealEsrgan_GUI
             }
         }
 
-        String LoadSettings(String key)
+        private string LoadSettings(string key)
         {
-            var setting = config.AppSettings.Settings[key];
-            if (setting == null)
-                return "";
-            return config.AppSettings.Settings[key]?.Value;
+            var s = config.AppSettings.Settings[key];
+            return s == null ? "" : s.Value;
         }
 
-        void AddOrSet(String key, String value)
+        private void AddOrSet(string key, string value)
         {
             if (config.AppSettings.Settings[key] != null)
                 config.AppSettings.Settings[key].Value = value;
