@@ -50,8 +50,48 @@ namespace RealEsrgan_GUI
                 AutoTitleSizeCheckBox
             };
 
-            esrgan = new Esrgan("realesrgan-ncnn-vulkan.exe", "models");
-            fFmpeg = new FFmpeg("ffmpeg.exe");
+            // initialize external tools with error handling (show message and exit if missing)
+            Esrgan tempEsrgan = null;
+            FFmpeg tempFfmpeg = null;
+            try
+            {
+                tempEsrgan = new Esrgan("realesrgan-ncnn-vulkan.exe", "models");
+                tempFfmpeg = new FFmpeg("ffmpeg.exe");
+            }
+            catch (FileNotFoundException fnf)
+            {
+                // stop pipe server and dispose settings before exit
+                try { pipeServer?.Stop(); pipeServer?.Dispose(); } catch { }
+                try { settingsManager?.Dispose(); } catch { }
+
+                MessageBox.Show("Required executable not found:\n\n" + fnf.Message + "\n\nPlace the executable or a .lnk shortcut to it in the application folder.",
+                                "Missing dependency", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // assign readonly fields to satisfy compiler (constructor will not complete)
+                esrgan = null;
+                fFmpeg = null;
+
+                Environment.Exit(1);
+                return;
+            }
+            catch (Exception ex)
+            {
+                try { pipeServer?.Stop(); pipeServer?.Dispose(); } catch { }
+                try { settingsManager?.Dispose(); } catch { }
+
+                MessageBox.Show("Failed to initialize required tools:\n\n" + ex.Message,
+                                "Initialization error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                esrgan = null;
+                fFmpeg = null;
+
+                Environment.Exit(1);
+                return;
+            }
+
+            // assign readonly fields
+            esrgan = tempEsrgan;
+            fFmpeg = tempFfmpeg;
 
             foreach (var name in esrgan.GetModelNames())
                 ModelComboBox.Items.Add(name);
