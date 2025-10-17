@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.IO.Pipes;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -14,7 +13,7 @@ namespace RealEsrgan_GUI
     internal static class Program
     {
         /// <summary>
-        /// Главная точка входа для приложения.
+        /// Main entry point.
         /// </summary>
         [STAThread]
         static void Main(string[] args)
@@ -23,38 +22,14 @@ namespace RealEsrgan_GUI
             {
                 if (!createdNew)
                 {
-                    if (args.Length == 0) return;
+                    // If another instance is running, forward args via pipe and exit.
+                        if (args.Length == 0) return;
 
-                    try
-                    {
-                        using (var client = new NamedPipeClientStream(".", "RealEsrganPipe", PipeDirection.Out))
-                        {
-                            int retries = 10;
-                            while (retries-- > 0)
-                            {
-                                try
-                                {
-                                    client.Connect(100);
-                                    break;
-                                }
-                                catch
-                                {
-                                    Thread.Sleep(50);
-                                }
-                            }
+                    if (PipeServer.SendArgs("RealEsrganPipe", args))
+                        return;
 
-                            using (var writer = new StreamWriter(client) { AutoFlush = true })
-                            {
-                                string argString = string.Join("|", args);
-                                writer.WriteLine(argString);
-                            }
-                        }
-
-                    }
-                    catch
-                    {
-                        Console.WriteLine("No running instance found.");
-                    }
+                    // fallback: no running instance found or failed to send
+                    Console.WriteLine("No running instance found.");
                     return;
                 }
 
